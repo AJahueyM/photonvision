@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -43,7 +44,9 @@ import org.photonvision.mrcal.MrCalJNILoader;
 import org.photonvision.raspi.LibCameraJNILoader;
 import org.photonvision.server.Server;
 import org.photonvision.vision.apriltag.AprilTagFamily;
+import org.photonvision.vision.camera.CameraType;
 import org.photonvision.vision.camera.FileVisionSource;
+import org.photonvision.vision.camera.NetworkCameraSource;
 import org.photonvision.vision.opencv.CVMat;
 import org.photonvision.vision.opencv.ContourGroupingMode;
 import org.photonvision.vision.opencv.ContourShape;
@@ -65,6 +68,7 @@ public class Main {
     private static final boolean isRelease = PhotonVersion.isRelease;
 
     private static boolean isTestMode = false;
+    private static String networkCameraURL = "";
     private static Path testModeFolder = null;
     private static boolean printDebugLogs;
 
@@ -77,6 +81,12 @@ public class Main {
                 "test-mode",
                 false,
                 "Run in test mode with 2019 and 2020 WPI field images in place of cameras");
+        options.addOption(
+                "net",
+                "network-mode",
+                true,
+                "Run in Network Mode");
+
 
         options.addOption("p", "path", true, "Point test mode to a specific folder");
         options.addOption(
@@ -102,6 +112,10 @@ public class Main {
             if (cmd.hasOption("debug")) {
                 printDebugLogs = true;
                 logger.info("Enabled debug logging");
+            }
+
+            if (cmd.hasOption("network-mode")) {
+                networkCameraURL = cmd.getOptionValue("network-mode");
             }
 
             if (cmd.hasOption("test-mode")) {
@@ -177,6 +191,37 @@ public class Main {
         }
     }
 
+    private static void addNetworkSource(){
+        ConfigManager.getInstance().load();
+
+        var networkConfig =
+                ConfigManager.getInstance().getConfig().getCameraConfigurations().get("NetworkSource");
+
+        if(networkConfig == null){
+            networkConfig = new CameraConfiguration("NetworkSource", networkCameraURL);
+            networkConfig.FOV = 70;
+            networkConfig.cameraType = CameraType.HttpCamera;
+
+
+            var pipeline2024 = new AprilTagPipelineSettings();
+            pipeline2024.tagFamily = AprilTagFamily.kTag36h11;
+            pipeline2024.inputShouldShow = true;
+            pipeline2024.threads = 8;
+
+            var psList2024 = new ArrayList<CVPipelineSettings>();
+            psList2024.add(pipeline2024);
+            networkConfig.pipelineSettings = psList2024;
+        }
+
+        var nvs2024 = new NetworkCameraSource(networkConfig);
+
+        var collectedSources = new ArrayList<VisionSource>();
+        collectedSources.add(nvs2024);
+
+        ConfigManager.getInstance().unloadCameraConfigs();
+        VisionModuleManager.getInstance().addSources(collectedSources).forEach(VisionModule::start);
+        ConfigManager.getInstance().addCameraConfigurations(collectedSources);
+    }
     private static void addTestModeSources() {
         ConfigManager.getInstance().load();
 
@@ -412,7 +457,12 @@ public class Main {
         NeuralNetworkModelManager.getInstance()
                 .initialize(ConfigManager.getInstance().getModelsDirectory());
 
-        if (!isTestMode) {
+        if(!networkCameraURL.isEmpty()){
+            addNetworkSource();
+            VisionSourceManager.getInstance()
+                    .registerLoadedConfigs(
+                            ConfigManager.getInstance().getConfig().getCameraConfigurations().values());
+        }else if (!isTestMode) {
             logger.debug("Loading VisionSourceManager...");
             VisionSourceManager.getInstance()
                     .registerLoadedConfigs(
