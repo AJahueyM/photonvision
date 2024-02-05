@@ -213,6 +213,8 @@ public class Main {
             networkConfig.pipelineSettings = psList2024;
         }
 
+        networkConfig.path = networkCameraURL;
+
         var nvs2024 = new NetworkCameraSource(networkConfig);
 
         var collectedSources = new ArrayList<VisionSource>();
