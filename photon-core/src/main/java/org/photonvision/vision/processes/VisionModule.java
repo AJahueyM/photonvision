@@ -46,7 +46,6 @@ import org.photonvision.vision.camera.CameraQuirk;
 import org.photonvision.vision.camera.CameraType;
 import org.photonvision.vision.camera.LibcameraGpuSource;
 import org.photonvision.vision.camera.QuirkyCamera;
-import org.photonvision.vision.camera.USBCameraSource;
 import org.photonvision.vision.frame.Frame;
 import org.photonvision.vision.frame.consumer.FileSaveFrameConsumer;
 import org.photonvision.vision.frame.consumer.MJPGFrameConsumer;
@@ -98,14 +97,10 @@ public class VisionModule {
                         visionSource.getSettables().getConfiguration().nickname,
                         LogGroup.VisionModule);
 
-        // Find quirks for the current camera
-        if (visionSource instanceof USBCameraSource) {
-            cameraQuirks = ((USBCameraSource) visionSource).getCameraQuirks();
-        } else if (visionSource instanceof LibcameraGpuSource) {
-            cameraQuirks = QuirkyCamera.ZeroCopyPiCamera;
-        } else {
-            cameraQuirks = QuirkyCamera.DefaultCamera;
-        }
+        cameraQuirks = visionSource.getCameraConfiguration().cameraQuirks;
+
+        if (visionSource.getCameraConfiguration().cameraQuirks == null)
+            visionSource.getCameraConfiguration().cameraQuirks = QuirkyCamera.DefaultCamera;
 
         // We don't show gain if the config says it's -1. So check here to make sure it's non-negative
         // if it _is_ supported
@@ -348,11 +343,14 @@ public class VisionModule {
                         + " and settings "
                         + data);
         settings.gridSize = Units.inchesToMeters(data.squareSizeIn);
+        settings.markerSize = Units.inchesToMeters(data.markerSizeIn);
         settings.boardHeight = data.patternHeight;
         settings.boardWidth = data.patternWidth;
         settings.boardType = data.boardType;
         settings.useMrCal = data.useMrCal;
         settings.resolution = resolution;
+        settings.useOldPattern = data.useOldPattern;
+        settings.tagFamily = data.tagFamily;
 
         // Disable gain if not applicable
         if (!cameraQuirks.hasQuirk(CameraQuirk.Gain)) {
@@ -517,6 +515,7 @@ public class VisionModule {
         // TODO refactor into helper method
         var temp = new HashMap<Integer, HashMap<String, Object>>();
         var videoModes = visionSource.getSettables().getAllVideoModes();
+
         for (var k : videoModes.keySet()) {
             var internalMap = new HashMap<String, Object>();
 
