@@ -68,6 +68,8 @@ public class Main {
     private static final boolean isRelease = PhotonVersion.isRelease;
 
     private static boolean isTestMode = false;
+    private static boolean isSmoketest = false;
+    private static String networkCameraURL = "";
     private static Path testModeFolder = null;
     private static boolean printDebugLogs;
 
@@ -80,12 +82,7 @@ public class Main {
                 "test-mode",
                 false,
                 "Run in test mode with 2019 and 2020 WPI field images in place of cameras");
-        options.addOption(
-                "net",
-                "network-mode",
-                true,
-                "Run in Network Mode");
-
+        options.addOption("net", "network-mode", true, "Run in Network Mode");
 
         options.addOption("p", "path", true, "Point test mode to a specific folder");
         options.addOption(
@@ -199,17 +196,16 @@ public class Main {
         }
     }
 
-    private static void addNetworkSource(){
+    private static void addNetworkSource() {
         ConfigManager.getInstance().load();
 
         var networkConfig =
                 ConfigManager.getInstance().getConfig().getCameraConfigurations().get("NetworkSource");
 
-        if(networkConfig == null){
+        if (networkConfig == null) {
             networkConfig = new CameraConfiguration("NetworkSource", networkCameraURL);
             networkConfig.FOV = 70;
             networkConfig.cameraType = CameraType.HttpCamera;
-
 
             var pipeline2024 = new AprilTagPipelineSettings();
             pipeline2024.tagFamily = AprilTagFamily.kTag36h11;
@@ -232,6 +228,7 @@ public class Main {
         VisionModuleManager.getInstance().addSources(collectedSources).forEach(VisionModule::start);
         ConfigManager.getInstance().addCameraConfigurations(collectedSources);
     }
+
     private static void addTestModeSources() {
         ConfigManager.getInstance().load();
 
@@ -484,12 +481,12 @@ public class Main {
         if (isSmoketest) {
             logger.info("PhotonVision base functionality loaded -- smoketest complete");
             System.exit(0);
-        }else if(!networkCameraURL.isEmpty()){
+        } else if (!networkCameraURL.isEmpty()) {
             addNetworkSource();
             VisionSourceManager.getInstance()
                     .registerLoadedConfigs(
                             ConfigManager.getInstance().getConfig().getCameraConfigurations().values());
-        }else if (!isTestMode) {
+        } else if (!isTestMode) {
             logger.debug("Loading VisionSourceManager...");
             VisionSourceManager.getInstance()
                     .registerLoadedConfigs(

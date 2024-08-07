@@ -2,15 +2,10 @@ package org.photonvision.vision.camera;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-
 import edu.wpi.first.util.PixelFormat;
+import java.util.HashMap;
+import java.util.Objects;
 import org.photonvision.common.configuration.CameraConfiguration;
-
 import org.photonvision.vision.frame.FrameProvider;
 import org.photonvision.vision.frame.provider.NetworkFrameProvider;
 import org.photonvision.vision.processes.VisionSource;
@@ -40,7 +35,6 @@ public class NetworkCameraSource extends VisionSource {
 
             videoModes = new HashMap<>();
             videoModes.put(0, videoMode);
-
         }
 
         @Override
@@ -50,9 +44,9 @@ public class NetworkCameraSource extends VisionSource {
 
         @Override
         public void setAutoExposure(boolean cameraAutoExposure) {
-            if(cameraAutoExposure){
+            if (cameraAutoExposure) {
                 httpCamera.setExposureAuto();
-            }else {
+            } else {
                 httpCamera.setExposureHoldCurrent();
             }
         }
@@ -63,8 +57,7 @@ public class NetworkCameraSource extends VisionSource {
         }
 
         @Override
-        public void setGain(int gain) {
-        }
+        public void setGain(int gain) {}
 
         @Override
         public VideoMode getCurrentVideoMode() {
@@ -75,6 +68,7 @@ public class NetworkCameraSource extends VisionSource {
         public HashMap<Integer, VideoMode> getAllVideoModes() {
             return videoModes;
         }
+
         @Override
         public void setVideoModeInternal(VideoMode videoMode) {
             try {
