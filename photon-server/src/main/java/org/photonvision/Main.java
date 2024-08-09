@@ -47,6 +47,7 @@ import org.photonvision.vision.apriltag.AprilTagFamily;
 import org.photonvision.vision.camera.CameraType;
 import org.photonvision.vision.camera.FileVisionSource;
 import org.photonvision.vision.camera.NetworkCameraSource;
+import org.photonvision.vision.camera.QuirkyCamera;
 import org.photonvision.vision.opencv.CVMat;
 import org.photonvision.vision.opencv.ContourGroupingMode;
 import org.photonvision.vision.opencv.ContourShape;
@@ -215,6 +216,7 @@ public class Main {
             var psList2024 = new ArrayList<CVPipelineSettings>();
             psList2024.add(pipeline2024);
             networkConfig.pipelineSettings = psList2024;
+            networkConfig.cameraQuirks = QuirkyCamera.DefaultCamera;
         }
 
         networkConfig.path = networkCameraURL;
@@ -404,10 +406,10 @@ public class Main {
         }
 
         // We don't want to trigger an exit in test mode or smoke test. This is specifically for MacOS.
-        if (!(Platform.isSupported() || isSmoketest || isTestMode)) {
+        /*if (!(Platform.isSupported() || isSmoketest || isTestMode)) {
             logger.error("This platform is unsupported!");
             System.exit(1);
-        }
+        }*/
 
         try {
             boolean success = TestUtils.loadLibraries();
